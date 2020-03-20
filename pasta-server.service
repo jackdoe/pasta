@@ -1,0 +1,10 @@
+[Unit]
+Description=copy paste service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/pasta-server
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
