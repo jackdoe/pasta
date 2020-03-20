@@ -30,7 +30,13 @@ make emacs use pasta-paste and pasta-copy:
   (setq interprogram-paste-function 'copy-from-linux
 
 
-I also do:
+Also in zsh:
+  pasta_paste() {
+      BUFFER=$(pasta-paste)
+      CURSOR=${#BUFFER}
+  }
+  zle -N pasta_paste
+  bindkey "^y" pasta_paste
 
   alias pbcopy=pasta-copy
   alias pbpaste=pasta-paste
@@ -46,6 +52,5 @@ PS: it is just a http server you can use it with curl:
 
   # get aaa from the clipboard
   curl http://127.0.0.1:8111/paste
-
 
 
