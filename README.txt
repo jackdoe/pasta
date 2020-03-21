@@ -34,9 +34,13 @@ make emacs use pasta-paste and pasta-copy:
 
 Also in zsh:
   pasta_paste() {
-      BUFFER=$(pasta-paste)
-      CURSOR=${#BUFFER}
+      p=$(pasta-paste)
+      cp=$LBUFFER$p
+
+      BUFFER=$LBUFFER$p$RBUFFER
+      CURSOR=${#cp}
   }
+
   zle -N pasta_paste
   bindkey "^y" pasta_paste
 
