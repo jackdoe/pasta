@@ -1,11 +1,11 @@
-commit f8578ce3bda308cebdb10d7d7281c4968152d4e4
+commit 7a7112d7d08371267dd558551e4bc0197cb218cb
 Author: borislav nikolov <jack@sofialondonmoskva.com>
 Date:   Sat Mar 21 23:42:22 2020 +0100
 
     add copy_selection_to_user
 
 diff --git a/drivers/tty/vt/selection.c b/drivers/tty/vt/selection.c
-index d7d2e4b844bc..0fe970970d85 100644
+index d7d2e4b844bc..a64427930df7 100644
 --- a/drivers/tty/vt/selection.c
 +++ b/drivers/tty/vt/selection.c
 @@ -6,6 +6,7 @@
@@ -16,7 +16,7 @@ index d7d2e4b844bc..0fe970970d85 100644
   *     'int paste_selection(struct tty_struct *)'
   *     'int sel_loadlut(char __user *)'
   *
-@@ -72,6 +73,43 @@ sel_pos(int n)
+@@ -72,6 +73,45 @@ sel_pos(int n)
  				0);
  }
  
@@ -36,12 +36,14 @@ index d7d2e4b844bc..0fe970970d85 100644
 +			   sizeof(sel_buffer_lth)))
 +		return -EFAULT;
 +
-+	if (get_sel_user_size < sel_buffer_lth)
-+		return -EFAULT;
-+
-+
-+
 +	mutex_lock(&sel_lock);
++
++	if (get_sel_user_size < sel_buffer_lth) {
++
++		mutex_unlock(&sel_lock);
++
++		return -EFAULT;
++	}
 +
 +	ret = copy_to_user(arg,
 +			   &sel_buffer_lth,

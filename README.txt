@@ -90,3 +90,50 @@ pasta_mouse_copy() {
 
 zle -N pasta_mouse_copy
 bindkey "^[w" pasta_mouse_copy
+
+
+the kernel patch looks like:
+
+---
+
+in drivers/tty/vt/selection.c:
+
++int copy_selection_to_user(char __user *arg)
++{
++	int get_sel_user_size;
++	int ret;
++
++	if (copy_from_user(&get_sel_user_size,
++			   arg,
++			   sizeof(sel_buffer_lth)))
++		return -EFAULT;
++
++	mutex_lock(&sel_lock);
++
++	if (get_sel_user_size < sel_buffer_lth) {
++
++		mutex_unlock(&sel_lock);
++
++		return -EFAULT;
++	}
++
++	ret = copy_to_user(arg,
++			   &sel_buffer_lth,
++			   sizeof(sel_buffer_lth));
++	if (ret == 0)
++		ret = copy_to_user(arg+sizeof(sel_buffer_lth),
++				   sel_buffer,
++				   sel_buffer_lth);
++
++	mutex_unlock(&sel_lock);
++
++	return ret;
++}
+
+and in drivers/tty/vt/vt.c (tioclinux):
+
++		case TIOCL_GETSEL:
++			ret = copy_selection_to_user(p+1);
++			break;
+
+---
