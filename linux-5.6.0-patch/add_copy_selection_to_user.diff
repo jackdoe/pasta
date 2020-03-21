@@ -1,0 +1,100 @@
+commit f8578ce3bda308cebdb10d7d7281c4968152d4e4
+Author: borislav nikolov <jack@sofialondonmoskva.com>
+Date:   Sat Mar 21 23:42:22 2020 +0100
+
+    add copy_selection_to_user
+
+diff --git a/drivers/tty/vt/selection.c b/drivers/tty/vt/selection.c
+index d7d2e4b844bc..0fe970970d85 100644
+--- a/drivers/tty/vt/selection.c
++++ b/drivers/tty/vt/selection.c
+@@ -6,6 +6,7 @@
+  *			       struct tty_struct *)'
+  *     'int set_selection_kernel(struct tiocl_selection *, struct tty_struct *)'
+  *     'void clear_selection(void)'
++ *     'int copy_selection_to_user(char __user *)'
+  *     'int paste_selection(struct tty_struct *)'
+  *     'int sel_loadlut(char __user *)'
+  *
+@@ -72,6 +73,43 @@ sel_pos(int n)
+ 				0);
+ }
+ 
++/**
++ *	copy_selection_to_user		-	get current selection
++ *
++ *	Get a copy of current selection, console lock does not have to
++ *	be held
++ */
++int copy_selection_to_user(char __user *arg)
++{
++	int get_sel_user_size;
++	int ret;
++
++	if (copy_from_user(&get_sel_user_size,
++			   arg,
++			   sizeof(sel_buffer_lth)))
++		return -EFAULT;
++
++	if (get_sel_user_size < sel_buffer_lth)
++		return -EFAULT;
++
++
++
++	mutex_lock(&sel_lock);
++
++	ret = copy_to_user(arg,
++			   &sel_buffer_lth,
++			   sizeof(sel_buffer_lth));
++	if (ret == 0)
++		ret = copy_to_user(arg+sizeof(sel_buffer_lth),
++				   sel_buffer,
++				   sel_buffer_lth);
++
++	mutex_unlock(&sel_lock);
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(copy_selection_to_user);
++
+ /**
+  *	clear_selection		-	remove current selection
+  *
+diff --git a/drivers/tty/vt/vt.c b/drivers/tty/vt/vt.c
+index 15d27698054a..e08711aebb1d 100644
+--- a/drivers/tty/vt/vt.c
++++ b/drivers/tty/vt/vt.c
+@@ -3052,6 +3052,9 @@ int tioclinux(struct tty_struct *tty, unsigned long arg)
+ 		case TIOCL_PASTESEL:
+ 			ret = paste_selection(tty);
+ 			break;
++		case TIOCL_GETSEL:
++			ret = copy_selection_to_user(p+1);
++			break;
+ 		case TIOCL_UNBLANKSCREEN:
+ 			console_lock();
+ 			unblank_screen();
+diff --git a/include/linux/selection.h b/include/linux/selection.h
+index e2c1f96bf059..6d8e33ac80d4 100644
+--- a/include/linux/selection.h
++++ b/include/linux/selection.h
+@@ -15,6 +15,7 @@ extern struct vc_data *sel_cons;
+ struct tty_struct;
+ 
+ extern void clear_selection(void);
++extern int copy_selection_to_user(char __user *arg);
+ extern int set_selection_user(const struct tiocl_selection __user *sel,
+ 			      struct tty_struct *tty);
+ extern int set_selection_kernel(struct tiocl_selection *v,
+diff --git a/include/uapi/linux/tiocl.h b/include/uapi/linux/tiocl.h
+index b32acc229024..055ebda041d4 100644
+--- a/include/uapi/linux/tiocl.h
++++ b/include/uapi/linux/tiocl.h
+@@ -20,6 +20,7 @@ struct tiocl_selection {
+ };
+ 
+ #define TIOCL_PASTESEL	3	/* paste previous selection */
++#define TIOCL_GETSEL	18	/* get current selection */
+ #define TIOCL_UNBLANKSCREEN	4	/* unblank screen */
+ 
+ #define TIOCL_SELLOADLUT	5

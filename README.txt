@@ -60,3 +60,33 @@ PS: it is just a http server you can use it with curl:
   curl --unix-socket $HOME/.pasta/sock  http://unix/paste
 
 
+If you want to add support for programatically getting the mouse
+selection you have to apply linux-5.6.0-patch/add_copy_selection_to_user.diff
+(dont use in production, it is just a hack to get the current
+selection)
+
+then you can run `pasta-copy -sel` which will do
+
+	fd, _ := os.Open("/dev/tty")
+
+	value := make([]byte, 1024*10) // 10k should be enough
+
+	value[0] = byte(TIOCL_GETSEL)
+	nativeEndian.PutUint32(value[1:], uint32(len(value)-5))
+
+	err = ioctl(int(fd.Fd()), TIOCLINUX, uintptr(unsafe.Pointer(&value[0])))
+	if err != nil {
+		panic(err)
+	}
+
+	size := nativeEndian.Uint32(value[1:])
+	clipboard = bytes.NewReader(value[5 : size+5])
+
+and send it to the pasta server
+
+pasta_mouse_copy() {
+    pasta-copy -sel
+}
+
+zle -N pasta_mouse_copy
+bindkey "^[w" pasta_mouse_copy
