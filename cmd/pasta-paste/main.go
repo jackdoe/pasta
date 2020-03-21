@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/jackdoe/pasta/pkg/util"
@@ -14,5 +14,16 @@ func main() {
 		panic(err)
 	}
 	defer r.Body.Close()
-	_, _ = io.Copy(os.Stdout, r.Body)
+
+	// io.Copy(os.Stdout, r.Body) confuses zsh
+	// if r.Body is empty
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	if len(b) > 0 {
+		_, _ = os.Stdout.Write(b)
+	}
 }

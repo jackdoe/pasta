@@ -29,7 +29,7 @@ make emacs use pasta-paste and pasta-copy:
         (process-send-eof proc))))
   
   (setq interprogram-cut-function 'paste-to-linux)
-  (setq interprogram-paste-function 'copy-from-linux
+  (setq interprogram-paste-function 'copy-from-linux)
 
 
 Also in zsh:

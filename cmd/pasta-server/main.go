@@ -77,9 +77,11 @@ func main() {
 		var b []byte
 
 		lock.Lock()
+
 		if len(clipboard) > 0 {
 			b = clipboard[len(clipboard)-1]
 		}
+
 		lock.Unlock()
 
 		if len(b) > 0 {
