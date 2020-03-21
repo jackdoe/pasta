@@ -1,12 +1,14 @@
 package main
 
 import (
-	"net/http"
 	"os"
+
+	"github.com/jackdoe/pasta/pkg/util"
 )
 
 func main() {
-	_, err := http.Post("http://localhost:8111/copy", "octet/stream", os.Stdin)
+	h := util.Client()
+	_, err := h.Post("http://unix/copy", "octet/stream", os.Stdin)
 	if err != nil {
 		panic(err)
 	}

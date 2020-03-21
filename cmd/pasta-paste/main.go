@@ -2,12 +2,14 @@ package main
 
 import (
 	"io"
-	"net/http"
 	"os"
+
+	"github.com/jackdoe/pasta/pkg/util"
 )
 
 func main() {
-	r, err := http.Get("http://localhost:8111/paste")
+	h := util.Client()
+	r, err := h.Get("http://unix/paste")
 	if err != nil {
 		panic(err)
 	}

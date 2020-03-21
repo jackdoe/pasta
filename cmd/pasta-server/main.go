@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/jackdoe/pasta/pkg/util"
 )
 
 func encrypt(data []byte, key []byte) []byte {
@@ -86,5 +88,6 @@ func main() {
 		_, _ = w.Write(b)
 	})
 
-	log.Fatal(http.ListenAndServe("127.0.0.1:8111", nil))
+	l := util.Create()
+	log.Fatal(http.Serve(l, nil))
 }

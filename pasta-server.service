@@ -2,7 +2,7 @@
 Description=copy paste service
 
 [Service]
-Type=forking
+Type=simple
 ExecStart=/usr/bin/pasta-server
 Restart=on-failure
 

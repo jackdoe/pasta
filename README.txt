@@ -10,8 +10,10 @@ the latest value in memory.
 build the cmd/ commands, and copy them to /usr/bin
 then:
 
-  $ cp pasta-server.service ~/.config/systemd/uesr
+  $ cp pasta-server.service ~/.config/systemd/user
   $ systemctl enable --user pasta-server
+
+or run install.sh which does those steps
 
 # setup
 
@@ -48,9 +50,9 @@ pretty cool.
 PS: it is just a http server you can use it with curl:
 
   # put aaa in the clipboard
-  echo -n 'aaa' | curl --data-binary @- http://127.0.0.1:8111/copy
+  echo -n 'aaa' | curl --unix-socket $HOME/.pasta/sock --data-binary @- http://unix/copy
 
   # get aaa from the clipboard
-  curl http://127.0.0.1:8111/paste
+  curl --unix-socket $HOME/.pasta/sock  http://unix/paste
 
 
