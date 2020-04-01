@@ -1,11 +1,11 @@
-commit 7a7112d7d08371267dd558551e4bc0197cb218cb
+commit 5cf882d8b74747bbc08463d83cf80509c920edca
 Author: borislav nikolov <jack@sofialondonmoskva.com>
 Date:   Sat Mar 21 23:42:22 2020 +0100
 
     add copy_selection_to_user
 
 diff --git a/drivers/tty/vt/selection.c b/drivers/tty/vt/selection.c
-index d7d2e4b844bc..a64427930df7 100644
+index d54a549c5892..9b26dec762dd 100644
 --- a/drivers/tty/vt/selection.c
 +++ b/drivers/tty/vt/selection.c
 @@ -6,6 +6,7 @@
@@ -16,8 +16,8 @@ index d7d2e4b844bc..a64427930df7 100644
   *     'int paste_selection(struct tty_struct *)'
   *     'int sel_loadlut(char __user *)'
   *
-@@ -72,6 +73,45 @@ sel_pos(int n)
- 				0);
+@@ -71,6 +72,45 @@ sel_pos(int n, bool unicode)
+ 	return inverse_translate(vc_sel.cons, screen_glyph(vc_sel.cons, n), 0);
  }
  
 +/**
@@ -33,27 +33,27 @@ index d7d2e4b844bc..a64427930df7 100644
 +
 +	if (copy_from_user(&get_sel_user_size,
 +			   arg,
-+			   sizeof(sel_buffer_lth)))
++			   sizeof(vc_sel.buf_len)))
 +		return -EFAULT;
 +
-+	mutex_lock(&sel_lock);
++	mutex_lock(&vc_sel.lock);
 +
-+	if (get_sel_user_size < sel_buffer_lth) {
++	if (get_sel_user_size < vc_sel.buf_len) {
 +
-+		mutex_unlock(&sel_lock);
++		mutex_unlock(&vc_sel.lock);
 +
 +		return -EFAULT;
 +	}
 +
 +	ret = copy_to_user(arg,
-+			   &sel_buffer_lth,
-+			   sizeof(sel_buffer_lth));
++			   &vc_sel.buf_len,
++			   sizeof(vc_sel.buf_len));
 +	if (ret == 0)
-+		ret = copy_to_user(arg+sizeof(sel_buffer_lth),
-+				   sel_buffer,
-+				   sel_buffer_lth);
++		ret = copy_to_user(arg+sizeof(vc_sel.buf_len),
++				   vc_sel.buffer,
++				   vc_sel.buf_len);
 +
-+	mutex_unlock(&sel_lock);
++	mutex_unlock(&vc_sel.lock);
 +
 +	return ret;
 +}
@@ -63,10 +63,10 @@ index d7d2e4b844bc..a64427930df7 100644
   *	clear_selection		-	remove current selection
   *
 diff --git a/drivers/tty/vt/vt.c b/drivers/tty/vt/vt.c
-index 15d27698054a..e08711aebb1d 100644
+index 309a39197be0..2b7eb55aafa3 100644
 --- a/drivers/tty/vt/vt.c
 +++ b/drivers/tty/vt/vt.c
-@@ -3052,6 +3052,9 @@ int tioclinux(struct tty_struct *tty, unsigned long arg)
+@@ -3061,6 +3061,9 @@ int tioclinux(struct tty_struct *tty, unsigned long arg)
  		case TIOCL_PASTESEL:
  			ret = paste_selection(tty);
  			break;
@@ -77,11 +77,11 @@ index 15d27698054a..e08711aebb1d 100644
  			console_lock();
  			unblank_screen();
 diff --git a/include/linux/selection.h b/include/linux/selection.h
-index e2c1f96bf059..6d8e33ac80d4 100644
+index 5b890ef5b59f..7cb971795013 100644
 --- a/include/linux/selection.h
 +++ b/include/linux/selection.h
-@@ -15,6 +15,7 @@ extern struct vc_data *sel_cons;
- struct tty_struct;
+@@ -15,6 +15,7 @@ struct tty_struct;
+ struct vc_data;
  
  extern void clear_selection(void);
 +extern int copy_selection_to_user(char __user *arg);
